@@ -26,6 +26,8 @@ output format can never silently bypass it.
 
 Paths are normalized from Windows backslashes to forward slashes, so the same
 ignore file works cross-platform. The project root itself is never blocked.
+Results whose path falls outside the project root are filtered out, since the
+ignore file cannot vet them.
 
 ## Installation
 

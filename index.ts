@@ -32,20 +32,26 @@ export const GrepGuard: Plugin = async ({ directory, worktree }) => {
   } catch {
     /* keine Datei = keine Einschraenkung */
   }
+  if (raw.startsWith("\uFEFF")) raw = raw.slice(1)
   if (!raw.trim()) return {}
 
   const matcher = ignore().add(raw)
 
+  const relativePath = (absolute: string): string =>
+    path.relative(root, absolute).split("\\").join("/")
+
   const isBlocked = (absolute: string): boolean => {
-    const relative = path.relative(root, absolute).split("\\").join("/")
-    if (!relative || relative === "." || relative.startsWith("..")) return false
+    const relative = relativePath(absolute)
+    if (!relative || relative === ".") return false
+    if (relative.startsWith("..") || path.isAbsolute(relative)) return true
     return matcher.ignores(relative)
   }
 
   return {
     "tool.execute.after": async (input: any, output: any) => {
       if (input.tool !== "grep") return
-      if (typeof output?.output !== "string" || !output.output) return
+      if (typeof output?.output !== "string") return refuse(output)
+      if (!output.output) return
 
       const blocks: { header: string; lines: string[] }[] = []
       let truncated = ""

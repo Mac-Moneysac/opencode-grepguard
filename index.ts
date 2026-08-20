@@ -7,8 +7,10 @@
  * Das Ausgabeformat stammt aus packages/opencode/src/tool/grep.ts.
  * Zeilen, die nicht dazu passen, fuehren zum Abbruch statt zum Durchreichen.
  *
- * Ablage: .opencode/plugins/grep-guard.ts
- * Abhaengigkeit in .opencode/package.json: { "dependencies": { "ignore": "^5.3.2" } }
+ * Installation: npm-Paket "opencode-grepguard" in der plugin-Liste der
+ * opencode.json eintragen — opencode installiert es samt Abhaengigkeiten.
+ * Lokal alternativ: Ablage unter .opencode/plugins/grep-guard.ts plus
+ * { "dependencies": { "ignore": "^7.0.6" } } in .opencode/package.json.
  */
 
 import type { Plugin } from "@opencode-ai/plugin"

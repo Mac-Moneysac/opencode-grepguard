@@ -1,0 +1,32 @@
+{
+  "name": "opencode-grepguard",
+  "version": "0.0.1",
+  "description": "An opencode plugin that post-filters the output of the built-in `grep` tool using an `opencode.ignore` file evaluated with full gitignore semantics.",
+  "main": "index.ts",
+  "keywords": [
+    "opencode",
+    "plugin",
+    "grep",
+    "permission",
+    "ignore"
+  ],
+  "license": "MIT",
+  "author": "Mac-Moneysac",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mac-Moneysac/opencode-grepguard.git"
+  },
+  "files": [
+    "index.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "ignore": "^7.0.6"
+  },
+  "devDependencies": {
+    "@types/node": "^26.4.0",
+    "@opencode-ai/plugin": "^1.18.23"
+
+  }
+}

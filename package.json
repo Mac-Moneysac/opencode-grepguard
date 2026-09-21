@@ -1,7 +1,8 @@
 {
   "name": "opencode-grepguard",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "An opencode plugin that post-filters the output of the built-in `grep` tool using an `opencode.ignore` file evaluated with full gitignore semantics.",
+  "type": "module",
   "main": "index.ts",
   "keywords": [
     "opencode",
@@ -26,7 +27,8 @@
   },
   "devDependencies": {
     "@types/node": "^26.4.0",
-    "@opencode-ai/plugin": "^1.18.23"
-
+    "typescript": "^5.8.2",
+    "@types/bun": "latest",
+    "@opencode/plugin": "^2.0.12"
   }
 }

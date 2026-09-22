@@ -1,18 +1,18 @@
 /**
- * grep-guard — `opencode.ignore` gilt fuer das grep-Tool.
+ * grep-guard — `opencode.ignore` applies to the grep tool.
  *
- * Filtert die Trefferliste nach Ausfuehrung. `opencode.ignore` wird mit
- * voller gitignore-Semantik ausgewertet, Negationen inklusive.
+ * Filters the match list after execution. `opencode.ignore` is evaluated with
+ * full gitignore semantics, negations included.
  *
- * Das Ausgabeformat stammt aus dem V2-Plugin `opencode.tool.grep`:
- * der menschenlesbare Text steht in `result.content`, die strukturierten
- * Treffer in `result.output` ({ entry: { path }, line, offset, text, ... }).
- * Beide werden gefiltert. Zeilen/Treffer, die nicht dazu passen, fuehren zum
- * Abbruch statt zum Durchreichen.
+ * The output format comes from the V2 plugin `opencode.tool.grep`:
+ * the human-readable text lives in `result.content`, the structured
+ * matches in `result.output` ({ entry: { path }, line, offset, text, ... }).
+ * Both are filtered. Lines/matches that do not fit cause the call to be
+ * aborted rather than passed through.
  *
- * Installation: npm-Paket "opencode-grepguard" in der plugins-Liste der
- * opencode.json eintragen — opencode installiert es samt Abhaengigkeiten.
- * Lokal alternativ: Ablage unter .opencode/plugins/grep-guard.ts plus
+ * Installation: add the npm package "opencode-grepguard" to the plugins list
+ * in opencode.json — opencode installs it along with its dependencies.
+ * Local alternative: place it at .opencode/plugins/grep-guard.ts plus
  * { "dependencies": { "ignore": "^7.0.6", "@opencode/plugin": "^2.0.12" } }
  * in .opencode/package.json.
  */
@@ -32,21 +32,21 @@ const TRUNCATED = /^\(Results are truncated:/
 export default Plugin.define({
   id: "grep-guard",
   async setup(ctx) {
-    // Repository-Wurzel: kanonischer Projekt-Checkout, sonst die Location.
+    // Repository root: canonical project checkout, otherwise the location.
     const root = ctx.location.project?.canonical || ctx.location.directory || process.cwd()
 
     let raw = ""
     try {
       raw = fs.readFileSync(path.join(root, IGNORE_FILE), "utf8")
     } catch {
-      /* keine Datei = keine Einschraenkung */
+      /* no file = no restriction */
     }
     if (raw.startsWith("\uFEFF")) raw = raw.slice(1)
     if (!raw.trim()) return
 
     const matcher = ignore().add(raw)
 
-    // grep gibt Pfade relativ zur Projektwurzel aus; Negationen inklusive.
+    // grep prints paths relative to the project root; negations included.
     const isBlocked = (printed: string): boolean => {
       const relative = printed.split("\\").join("/")
       if (!relative || relative === ".") return false
@@ -55,7 +55,7 @@ export default Plugin.define({
     }
 
     const fail = (result: Record<string, unknown>): never => {
-      const message = "grep-guard: Ausgabeformat unbekannt, Aufruf abgebrochen"
+      const message = "grep-guard: unknown output format, call aborted"
       result.content = message
       if (result.metadata && typeof result.metadata === "object") {
         ;(result.metadata as Record<string, unknown>).matches = 0
@@ -96,8 +96,8 @@ export default Plugin.define({
         return fail(result)
       }
 
-      // Strukturierte Treffer mit derselben Semantik filtern. Unbekannte
-      // Eintraege brechen ab, damit nichts unbemerkt durchrutscht.
+      // Filter structured matches with the same semantics. Unknown
+      // entries abort, so nothing slips through unnoticed.
       if (result.output !== undefined) {
         if (!Array.isArray(result.output)) return fail(result)
         const kept: unknown[] = []

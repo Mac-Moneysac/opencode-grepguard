@@ -21,7 +21,9 @@
 import { Plugin } from "@opencode/plugin"
 import ignore from "ignore"
 import fs from "node:fs"
+import os from "node:os"
 import path from "node:path"
+import util from "node:util"
 
 const IGNORE_FILE = "opencode.ignore"
 
@@ -37,6 +39,21 @@ type ToolResult = {
   content?: unknown
   output?: unknown
   metadata?: Record<string, unknown>
+}
+
+// Diagnostics for aborted calls. The model-visible result stays generic so no
+// paths leak; the full result is written to a local temp file instead.
+const LOG_FILE = path.join(os.tmpdir(), "opencode-grepguard.log")
+
+const logFail = (message: string, result: ToolResult) => {
+  try {
+    const line =
+      `timestamp=${new Date().toISOString()} plugin=grep-guard message=${message} ` +
+      `result=${util.inspect(result, { depth: 4 })}\n`
+    fs.appendFileSync(LOG_FILE, line, { mode: 0o600 })
+  } catch {
+    /* logging must never break the tool */
+  }
 }
 
 export default Plugin.define({
@@ -66,6 +83,7 @@ export default Plugin.define({
 
     const fail = (result: ToolResult): never => {
       const message = "grep-guard: unknown output format, call aborted"
+      logFail(message, result)
       result.content = [{ type: "text", text: message }]
       if (result.metadata && typeof result.metadata === "object") {
         result.metadata.matches = 0

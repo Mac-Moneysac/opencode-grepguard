@@ -29,7 +29,10 @@ OpenCode V1.
     - Filters the structured matches (`result.output`, `entry.path`) with the
       same rule, so paths cannot leak through structured/Code Mode results.
 4. If the output does not conform to the expected grammar, the hook overwrites
-   the output with an error message and throws, aborting the tool call.
+   the output with an error message and throws, aborting the tool call. The
+   model-visible message stays generic so no paths leak; the full diagnostic
+   (message plus the inspected result) is appended to
+   `os.tmpdir()/opencode-grepguard.log` instead.
 
 Paths are normalized from Windows backslashes to forward slashes, so the same
 ignore file works cross-platform. The project root itself is never blocked.

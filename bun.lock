@@ -5,10 +5,10 @@
     "": {
       "name": "opencode-grepguard",
       "dependencies": {
+        "@opencode/plugin": "^2.0.12",
         "ignore": "^7.0.6",
       },
       "devDependencies": {
-        "@opencode/plugin": "^2.0.12",
         "@types/bun": "latest",
         "@types/node": "^26.4.0",
         "typescript": "^5.8.2",

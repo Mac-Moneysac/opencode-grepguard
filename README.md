@@ -19,9 +19,10 @@ OpenCode V1.
 2. If the file is missing or empty, the plugin registers no hooks — it is a
    complete no-op with zero overhead.
 3. Otherwise an `execute.after` tool hook is registered that:
-    - Parses the model-visible text (`result.content`: `Found N matches`,
+    - Parses the model-visible text (`result.content` — either a plain string
+      or an array of `{ type: "text", text }` parts: `Found N matches`,
       `<file>:`, `  Line N: ...`, `(Results are truncated...)`) into per-file
-      blocks.
+      blocks. Non-text content parts abort the call (fail-closed).
     - Drops blocks whose file path matches `opencode.ignore`.
     - Re-renders the surviving blocks in the original format and updates
       `result.metadata.matches` to the filtered count.

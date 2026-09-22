@@ -5,8 +5,9 @@
  * full gitignore semantics, negations included.
  *
  * The output format comes from the V2 plugin `opencode.tool.grep`:
- * the human-readable text lives in `result.content`, the structured
- * matches in `result.output` ({ entry: { path }, line, offset, text, ... }).
+ * the human-readable text lives in `result.content` (a string or an array of
+ * `{ type: "text", text }` content parts), the structured matches in
+ * `result.output` ({ entry: { path }, line, offset, text, ... }).
  * Both are filtered. Lines/matches that do not fit cause the call to be
  * aborted rather than passed through.
  *
@@ -28,6 +29,15 @@ const HEADER = /^(\S.*):$/
 const MATCH_LINE = /^ {2}Line \d+: /
 const STATUS = [/^Found \d+ matches$/, /^No matches found$/]
 const TRUNCATED = /^\(Results are truncated:/
+
+// `Tool.Result` is deeply readonly and narrowly typed, but the hook hands us a
+// plain mutable object. This local shape mirrors the parts we touch, while
+// keeping `content`/`output` deliberately `unknown` for manual validation.
+type ToolResult = {
+  content?: unknown
+  output?: unknown
+  metadata?: Record<string, unknown>
+}
 
 export default Plugin.define({
   id: "grep-guard",
@@ -54,11 +64,11 @@ export default Plugin.define({
       return matcher.ignores(relative)
     }
 
-    const fail = (result: Record<string, unknown>): never => {
+    const fail = (result: ToolResult): never => {
       const message = "grep-guard: unknown output format, call aborted"
-      result.content = message
+      result.content = [{ type: "text", text: message }]
       if (result.metadata && typeof result.metadata === "object") {
-        ;(result.metadata as Record<string, unknown>).matches = 0
+        result.metadata.matches = 0
       }
       throw new Error(message)
     }
@@ -67,15 +77,32 @@ export default Plugin.define({
       if (event.tool !== "grep") return
       if (event.status !== "completed") return
 
-      const result = event.result as any
-      if (typeof result?.content !== "string") return fail(result)
-      if (!result.content) return
+      const result = event.result as ToolResult
+      const content = result.content
+      if (content === undefined || content === null || content === "") return
+
+      // `content` is `string | ReadonlyArray<TextContent | FileContent>`.
+      // Only text parts can be parsed; anything else fails closed.
+      let text: string
+      if (typeof content === "string") {
+        text = content
+      } else if (Array.isArray(content)) {
+        const parts: string[] = []
+        for (const part of content) {
+          if (!part || typeof part !== "object" || part.type !== "text" || typeof part.text !== "string") {
+            return fail(result)
+          }
+          parts.push(part.text)
+        }
+        text = parts.join("\n")
+      } else {
+        return fail(result)
+      }
 
       const blocks: { header: string; lines: string[] }[] = []
       let truncated = ""
       let current: { header: string; lines: string[] } | undefined
-
-      for (const line of result.content.split("\n")) {
+      for (const line of text.split("\n")) {
         if (line === "") continue
         if (STATUS.some((re) => re.test(line))) continue
         if (TRUNCATED.test(line)) {
@@ -119,9 +146,10 @@ export default Plugin.define({
           : [`Found ${total} matches`, ...kept.flatMap((b, i) => (i ? ["", b.header] : [b.header]).concat(b.lines))]
       if (truncated) rendered.push("", truncated)
 
-      result.content = rendered.join("\n")
+      result.content = [{ type: "text", text: rendered.join("\n") }]
+
       if (result.metadata && typeof result.metadata === "object") {
-        ;(result.metadata as Record<string, unknown>).matches = total
+        result.metadata.matches = total
       }
     })
   },

@@ -75,9 +75,16 @@ export default Plugin.define({
 
     // grep prints paths relative to the project root; negations included.
     const isBlocked = (printed: string): boolean => {
-      const relative = printed.split("\\").join("/")
+      const absolute = path.resolve(root, printed)
+      const relative = path.relative(root, absolute).split(path.sep).join("/")
       if (!relative || relative === ".") return false
-      if (relative.startsWith("..") || path.isAbsolute(relative)) return true
+      if (
+          relative === ".." ||
+          relative.startsWith("../") ||
+          path.isAbsolute(relative)
+      ) {
+        return true
+      }
       return matcher.ignores(relative)
     }
 
